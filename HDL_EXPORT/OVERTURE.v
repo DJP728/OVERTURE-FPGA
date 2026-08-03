@@ -214,42 +214,6 @@ module Mux_8x1_NBits #(
     end
 endmodule
 
-
-module Decoder2 (
-    output out_0,
-    output out_1,
-    output out_2,
-    output out_3,
-    input [1:0] sel
-);
-    assign out_0 = (sel == 2'h0)? 1'b1 : 1'b0;
-    assign out_1 = (sel == 2'h1)? 1'b1 : 1'b0;
-    assign out_2 = (sel == 2'h2)? 1'b1 : 1'b0;
-    assign out_3 = (sel == 2'h3)? 1'b1 : 1'b0;
-endmodule
-
-
-module Decoder3 (
-    output out_0,
-    output out_1,
-    output out_2,
-    output out_3,
-    output out_4,
-    output out_5,
-    output out_6,
-    output out_7,
-    input [2:0] sel
-);
-    assign out_0 = (sel == 3'h0)? 1'b1 : 1'b0;
-    assign out_1 = (sel == 3'h1)? 1'b1 : 1'b0;
-    assign out_2 = (sel == 3'h2)? 1'b1 : 1'b0;
-    assign out_3 = (sel == 3'h3)? 1'b1 : 1'b0;
-    assign out_4 = (sel == 3'h4)? 1'b1 : 1'b0;
-    assign out_5 = (sel == 3'h5)? 1'b1 : 1'b0;
-    assign out_6 = (sel == 3'h6)? 1'b1 : 1'b0;
-    assign out_7 = (sel == 3'h7)? 1'b1 : 1'b0;
-endmodule
-
 module DIG_Add
 #(
     parameter Bits = 1
@@ -288,10 +252,34 @@ module DIG_Sub #(
 endmodule
 
 
+module Decoder3 (
+    output out_0,
+    output out_1,
+    output out_2,
+    output out_3,
+    output out_4,
+    output out_5,
+    output out_6,
+    output out_7,
+    input [2:0] sel
+);
+    assign out_0 = (sel == 3'h0)? 1'b1 : 1'b0;
+    assign out_1 = (sel == 3'h1)? 1'b1 : 1'b0;
+    assign out_2 = (sel == 3'h2)? 1'b1 : 1'b0;
+    assign out_3 = (sel == 3'h3)? 1'b1 : 1'b0;
+    assign out_4 = (sel == 3'h4)? 1'b1 : 1'b0;
+    assign out_5 = (sel == 3'h5)? 1'b1 : 1'b0;
+    assign out_6 = (sel == 3'h6)? 1'b1 : 1'b0;
+    assign out_7 = (sel == 3'h7)? 1'b1 : 1'b0;
+endmodule
+
+
 module ALU_OVERTURE (
   input [7:0] INSTRUCTION,
   input [7:0] IN1,
   input [7:0] IN2,
+  input [7:0] ADDR,
+  input CLK,
   output [7:0] OUT
 );
   wire [2:0] s0;
@@ -301,6 +289,8 @@ module ALU_OVERTURE (
   wire [7:0] s4;
   wire [7:0] s5;
   wire [7:0] s6;
+  wire [7:0] s7;
+  wire s8;
   assign s0[0] = INSTRUCTION[0];
   assign s0[1] = INSTRUCTION[1];
   assign s0[2] = INSTRUCTION[2];
@@ -326,10 +316,25 @@ module ALU_OVERTURE (
     .c_i( 1'b0 ),
     .s( s6 )
   );
+  Decoder3 Decoder3_i2 (
+    .sel( s0 ),
+    .out_7( s8 )
+  );
+  DIG_BlockRAMDualPort #(
+    .Bits(8),
+    .AddrBits(8)
+  )
+  DIG_BlockRAMDualPort_i3 (
+    .A( ADDR ),
+    .Din( IN1 ),
+    .str( s8 ),
+    .C( CLK ),
+    .D( s7 )
+  );
   Mux_8x1_NBits #(
     .Bits(8)
   )
-  Mux_8x1_NBits_i2 (
+  Mux_8x1_NBits_i4 (
     .sel( s0 ),
     .in_0( s1 ),
     .in_1( s2 ),
@@ -337,11 +342,25 @@ module ALU_OVERTURE (
     .in_3( s4 ),
     .in_4( s5 ),
     .in_5( s6 ),
-    .in_6( 8'b0 ),
+    .in_6( s7 ),
     .in_7( 8'b0 ),
     .out( OUT )
   );
 endmodule
+
+module Decoder2 (
+    output out_0,
+    output out_1,
+    output out_2,
+    output out_3,
+    input [1:0] sel
+);
+    assign out_0 = (sel == 2'h0)? 1'b1 : 1'b0;
+    assign out_1 = (sel == 2'h1)? 1'b1 : 1'b0;
+    assign out_2 = (sel == 2'h2)? 1'b1 : 1'b0;
+    assign out_3 = (sel == 2'h3)? 1'b1 : 1'b0;
+endmodule
+
 
 module CompSigned #(
     parameter Bits = 1
@@ -482,8 +501,8 @@ module OVERTURE (
   wire [7:0] s41;
   wire [7:0] s42;
   wire [7:0] s43;
-  wire [2:0] s44;
-  wire s45;
+  wire [7:0] s44;
+  wire [2:0] s45;
   wire s46;
   wire s47;
   wire s48;
@@ -491,10 +510,12 @@ module OVERTURE (
   wire s50;
   wire s51;
   wire s52;
-  wire [7:0] s53;
+  wire s53;
   wire [7:0] s54;
-  wire s55;
-  wire [7:0] s56;
+  wire [7:0] s55;
+  wire s56;
+  wire s57;
+  wire [7:0] s58;
   DIG_Register DIG_Register_i0 (
     .D( 1'b1 ),
     .C( EXE ),
@@ -552,7 +573,7 @@ module OVERTURE (
     .D( IN ),
     .C( s3 ),
     .en( 1'b1 ),
-    .Q( s43 )
+    .Q( s44 )
   );
   Mux_2x1_NBits #(
     .Bits(8)
@@ -560,7 +581,7 @@ module OVERTURE (
   Mux_2x1_NBits_i8 (
     .sel( s12 ),
     .in_0( 8'b0 ),
-    .in_1( s43 ),
+    .in_1( s44 ),
     .out( s41 )
   );
   DIG_BlockRAMDualPort #(
@@ -617,80 +638,98 @@ module OVERTURE (
     .in_4( s35 ),
     .in_5( s37 ),
     .in_6( s41 ),
-    .in_7( 8'b0 ),
-    .out( s42 )
+    .in_7( s42 ),
+    .out( s43 )
   );
-  assign s56[5:0] = s16[5:0];
-  assign s56[6] = 1'b0;
-  assign s56[7] = 1'b0;
+  ALU_OVERTURE ALU_OVERTURE_i14 (
+    .INSTRUCTION( s16 ),
+    .IN1( s29 ),
+    .IN2( s31 ),
+    .ADDR( s42 ),
+    .CLK( s0 ),
+    .OUT( s39 )
+  );
+  assign s58[5:0] = s16[5:0];
+  assign s58[6] = 1'b0;
+  assign s58[7] = 1'b0;
   assign s17 = s16[7:6];
   assign s40 = s16[5:3];
-  assign s44 = s16[2:0];
-  Decoder2 Decoder2_i14 (
+  assign s45 = s16[2:0];
+  Decoder2 Decoder2_i15 (
     .sel( s17 ),
     .out_0( s18 ),
     .out_1( s19 ),
     .out_2( s20 ),
     .out_3( s21 )
   );
-  Decoder3 Decoder3_i15 (
-    .sel( s44 ),
-    .out_0( s45 ),
-    .out_1( s46 ),
-    .out_2( s47 ),
-    .out_3( s48 ),
-    .out_4( s49 ),
-    .out_5( s50 ),
-    .out_6( s51 ),
-    .out_7( s52 )
+  Decoder3 Decoder3_i16 (
+    .sel( s45 ),
+    .out_0( s46 ),
+    .out_1( s47 ),
+    .out_2( s48 ),
+    .out_3( s49 ),
+    .out_4( s50 ),
+    .out_5( s51 ),
+    .out_6( s52 ),
+    .out_7( s53 )
   );
-  Mux_2x1_NBits #(
-    .Bits(8)
-  )
-  Mux_2x1_NBits_i16 (
-    .sel( s20 ),
-    .in_0( 8'b0 ),
-    .in_1( s42 ),
-    .out( s27 )
-  );
-  assign s53[0] = s45;
-  assign s53[1] = s46;
-  assign s53[2] = s47;
-  assign s53[3] = s48;
-  assign s53[4] = s49;
-  assign s53[5] = s50;
-  assign s53[6] = s51;
-  assign s53[7] = s52;
-  assign s38 = ~ s19;
   Mux_2x1_NBits #(
     .Bits(8)
   )
   Mux_2x1_NBits_i17 (
     .sel( s20 ),
     .in_0( 8'b0 ),
-    .in_1( s53 ),
-    .out( s54 )
+    .in_1( s43 ),
+    .out( s27 )
   );
+  assign s54[0] = s46;
+  assign s54[1] = s47;
+  assign s54[2] = s48;
+  assign s54[3] = s49;
+  assign s54[4] = s50;
+  assign s54[5] = s51;
+  assign s54[6] = s52;
+  assign s54[7] = s53;
+  assign s38 = ~ s19;
   Mux_2x1_NBits #(
     .Bits(8)
   )
   Mux_2x1_NBits_i18 (
+    .sel( s38 ),
+    .in_0( s39 ),
+    .in_1( s27 ),
+    .out( s32 )
+  );
+  Mux_2x1_NBits #(
+    .Bits(8)
+  )
+  Mux_2x1_NBits_i19 (
+    .sel( s20 ),
+    .in_0( 8'b0 ),
+    .in_1( s54 ),
+    .out( s55 )
+  );
+  Mux_2x1_NBits #(
+    .Bits(8)
+  )
+  Mux_2x1_NBits_i20 (
     .sel( s18 ),
     .in_0( s27 ),
-    .in_1( s56 ),
+    .in_1( s58 ),
     .out( s25 )
   );
-  assign s33 = (s54[3] | s19);
-  assign s26 = (s18 | s54[0]);
-  assign s28 = s54[1];
-  assign s30 = s54[2];
-  assign s34 = s54[4];
-  assign s36 = s54[5];
-  assign s55 = s54[6];
+  assign s33 = (s55[3] | s19);
+  assign s26 = (s18 | s55[0]);
+  assign s28 = s55[1];
+  assign s30 = s55[2];
+  assign s34 = s55[4];
+  assign s36 = s55[5];
+  assign s56 = s55[6];
+  assign s57 = s55[7];
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i19 (
+  DIG_Register_BUS_i21 (
     .D( s25 ),
     .C( CLK ),
     .en( s26 ),
@@ -699,7 +738,7 @@ module OVERTURE (
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i20 (
+  DIG_Register_BUS_i22 (
     .D( s27 ),
     .C( CLK ),
     .en( s28 ),
@@ -708,7 +747,7 @@ module OVERTURE (
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i21 (
+  DIG_Register_BUS_i23 (
     .D( s27 ),
     .C( CLK ),
     .en( s30 ),
@@ -717,7 +756,16 @@ module OVERTURE (
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i22 (
+  DIG_Register_BUS_i24 (
+    .D( s32 ),
+    .C( CLK ),
+    .en( s33 ),
+    .Q( s23 )
+  );
+  DIG_Register_BUS #(
+    .Bits(8)
+  )
+  DIG_Register_BUS_i25 (
     .D( s27 ),
     .C( CLK ),
     .en( s34 ),
@@ -726,7 +774,7 @@ module OVERTURE (
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i23 (
+  DIG_Register_BUS_i26 (
     .D( s27 ),
     .C( CLK ),
     .en( s36 ),
@@ -735,37 +783,22 @@ module OVERTURE (
   Mux_2x1_NBits #(
     .Bits(8)
   )
-  Mux_2x1_NBits_i24 (
-    .sel( s55 ),
+  Mux_2x1_NBits_i27 (
+    .sel( s56 ),
     .in_0( 8'b0 ),
     .in_1( s27 ),
     .out( OUT )
   );
-  ALU_OVERTURE ALU_OVERTURE_i25 (
-    .INSTRUCTION( s16 ),
-    .IN1( s29 ),
-    .IN2( s31 ),
-    .OUT( s39 )
-  );
-  Mux_2x1_NBits #(
-    .Bits(8)
-  )
-  Mux_2x1_NBits_i26 (
-    .sel( s38 ),
-    .in_0( s39 ),
-    .in_1( s27 ),
-    .out( s32 )
-  );
   DIG_Register_BUS #(
     .Bits(8)
   )
-  DIG_Register_BUS_i27 (
-    .D( s32 ),
+  DIG_Register_BUS_i28 (
+    .D( s27 ),
     .C( CLK ),
-    .en( s33 ),
-    .Q( s23 )
+    .en( s57 ),
+    .Q( s42 )
   );
-  CONDITION CONDITION_i28 (
+  CONDITION CONDITION_i29 (
     .INSTRUCTION( s16 ),
     .IN( s23 ),
     .OUT( s24 )
